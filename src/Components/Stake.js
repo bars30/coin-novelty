@@ -17,38 +17,52 @@ const Stake = () => {
     const [account2Staked, setAccount2Staked] = React.useState(false)
 
     const connectAccount1 = async () => {
+        console.log("jhjh");
+        
         if (window.ethereum) {
-            await window.ethereum.enable()
+            await window.ethereum.enable();
+        } else {
+            alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
         }
-        else {
-            alert('Non-Ethereum browser detected. You should consider trying MetaMask!')
-        }
-        const web3 = new window.Web3(window.ethereum)
-        const accounts = await web3.eth.getAccounts()
-        let temp = {}
+    
+        const web3 = new window.Web3(window.ethereum);
+        const accounts = await web3.eth.getAccounts();
+    
+        // Fetch the balance for the first account
+        const balanceWei = await web3.eth.getBalance(accounts[0]);
+        const balance = web3.utils.fromWei(balanceWei, 'ether'); // Convert from wei to ether
+    
+        let temp = {};
         temp['account'] = accounts[0];
-        temp['balance'] = await web3.eth.getBalance(accounts[0]) / 1000000000000000000;
+        temp['balance'] = balance; // Set the balance in ether
         setAccount1(temp);
     }
+    
     const connectAccount2 = async () => {
         if (window.ethereum) {
-            await window.ethereum.enable()
+            await window.ethereum.enable();
+        } else {
+            alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
         }
-        else {
-            alert('Non-Ethereum browser detected. You should consider trying MetaMask!')
-        }
-        const web3 = new window.Web3(window.ethereum)
-        const accounts = await web3.eth.getAccounts()
+    
+        const web3 = new window.Web3(window.ethereum);
+        const accounts = await web3.eth.getAccounts();
+    
+        // Make sure the accounts are different
         if (accounts[0] !== account1.account) {
-            let temp = {}
+            // Fetch the balance for the second account
+            const balanceWei = await web3.eth.getBalance(accounts[0]);
+            const balance = web3.utils.fromWei(balanceWei, 'ether'); // Convert from wei to ether
+    
+            let temp = {};
             temp['account'] = accounts[0];
-            temp['balance'] = await web3.eth.getBalance(accounts[0]) / 1000000000000000000;
+            temp['balance'] = balance; // Set the balance in ether
             setAccount2(temp);
-        }
-        else {
-            alert('Change to the other account from Metamask.')
+        } else {
+            alert('Change to the other account from Metamask.');
         }
     }
+    
 
     const stakeAccount1 = async (e) => {
         e.preventDefault()
