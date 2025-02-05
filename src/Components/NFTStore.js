@@ -3,9 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { Web3Storage } from 'web3.storage'
 import { Helmet } from "react-helmet"
 import { NotificationContainer, NotificationManager } from 'react-notifications';
+import Papa from 'papaparse';
 import 'react-notifications/lib/notifications.css';
+import { PinataSDK } from "pinata";
+
+
 
 const Stake = () => {
+
+    const pinata = new PinataSDK({
+        pinataJwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIxNjdkNDBlMy02NmI4LTQ2MTQtYmIxZi1iNGQzOTVmMTMzZDYiLCJlbWFpbCI6Im5hci5iYXJzZWdoeWFuOTlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6ImI0ZGMyYzBkMGE3MzhhMjVlYmIzIiwic2NvcGVkS2V5U2VjcmV0IjoiMWY2ZmZiNjM3NmNjNGZhNDc5NTA1OTRhOTUzODllMjE3NTU5ZDlmNjBiOTFhZTI4YWMwOGQ0YTBmOGIxYjY3NyIsImV4cCI6MTc2OTg4MTI4N30.7y7hblRzH76ANMPm8iiwTZjhLmi2FjBa_mrX2IUTHw0",
+        pinataGateway: "olive-rapid-owl-18.mypinata.cloud",
+    });
 
     const navigate = useNavigate();
 
@@ -31,42 +40,156 @@ const Stake = () => {
         ]
         return files
     }
-
     const initialize = async () => {
+        const client = makeStorageClient();
+        let newestFile = "";
+        const maxResults = 1;
+        let response =  null; // Declare response here to ensure it's available throughout the function
+        const cid = ""
 
-        const client = makeStorageClient()
-        let newestFile = ""
-        const maxResults = 1
 
-        for await (const upload of client.list({ maxResults })) {
-            newestFile = upload.cid
+        try {
+        
+
+            // ✅ Получение последнего CID
+            const files = await pinata.files.list();
+            console.log("Files:", files);
+            console.log("Files:", files.files[0].cid);
+            const cid = files.files[0].cid;
+            console.log("🟠cid", cid);
+            
+            // ✅ Получение последнего CID
+
+            try {
+                const { data, contentType } = await pinata.gateways.get(cid);
+            
+                console.log("Content Type:", contentType);
+                console.log("Data:", data);
+                const jsonData =  data;
+                setGamesList(jsonData);
+                console.log("🍧🥐🍧", jsonData);
+                
+
+            } catch (error) {
+                console.error("Ошибка при запросе к Pinata:", error);
+            }
+            
+        } catch (error) {
+            console.error("Ошибка при запросе к Pinata:", error);
         }
+        
 
-        fetch(`https://${newestFile}.ipfs.dweb.link/games.json`)
-            .then(response => response.json())
-            .then(data => setGamesList(data));
-    }
+        try {
 
+            
+
+
+
+            // for await (const upload of client.list({ maxResults })) {
+            //     newestFile = upload.cid;
+            // }
+            // let cid = "";
+            // if (localStorage.getItem("cid")) {
+            //     cid = localStorage.getItem("cid");
+            //     console.log("🥬🥬", `https://gateway.pinata.cloud/ipfs/${cid}`);
+                
+            //     // response = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
+            //     response = await fetch("https://gateway.pinata.cloud/ipfs/bafkreid6upzot44mzk77zm7y5lek727tep7opqdjrhkmo7y7tud4j6w7em");
+            // } else {
+            //     // Новый URL с JSON-файлом
+            //     console.log("🥬🥬", `https://gateway.pinata.cloud/ipfs/bafkreiesvfn2o4oyd4w24koe2whdqpzuixgcwum7dfxet472ba2ica3tqy`);
+            //     response = await fetch("https://gateway.pinata.cloud/ipfs/bafkreid6upzot44mzk77zm7y5lek727tep7opqdjrhkmo7y7tud4j6w7em");
+            // }
+            // console.log(response);
+            
+    
+            // if (!response.ok) {
+            //     throw new Error("Не удалось загрузить JSON с играми из IPFS.");
+            // }
+    
+            // Парсим JSON
+            // const jsonData = await response.json();
+            // console.log("Загруженные игры:", jsonData);
+            // setGamesList(jsonData); // Устанавливаем данные в состояние
+    
+        } catch (error) {
+            console.error("Ошибка при инициализации магазина:", error);
+            NotificationManager.error("Ошибка при загрузке данных. Пожалуйста, попробуйте позже.", "Не удалось загрузить игры.");
+        }
+    };
+    
+    // // 🥬🥬🥬🥬
     const buyNFT = async (game) => {
-        const web3 = new window.Web3(window.ethereum)
-        const accounts = await web3.eth.getAccounts()
-        const res = await web3.eth.sendTransaction({ to: "0x962C3B2D6Decc54Bd482517c7284116160B0d84b", from: accounts[0], value: web3.utils.toWei(game.price.toString()) });
-        let temp = game
-        temp.owner = accounts[0]
-        temp.price += 0.2
-        let changeVal = gamesList.find(g => g.name === game.name)
-        gamesList[changeVal] = temp
-        if (res) {
-            const client = makeStorageClient()
-            const files = makeFileObjects()
-            const cid = await client.put(files)
-            NotificationManager.success('Thanks for purchasing this NFT!', 'Transaction Successful!')
+        try {
+            if (!game || typeof game.price === "undefined") {
+                console.error("Ошибка: Цена игры не определена.");
+                NotificationManager.error("Цена игры недоступна.", "Ошибка транзакции");
+                return;
+            }
+    
+            const web3 = new window.Web3(window.ethereum);
+            const accounts = await web3.eth.getAccounts();
+    
+            const priceInWei = web3.utils.toWei(game.price.toString(), "ether");
+    
+            const res = await web3.eth.sendTransaction({
+                to: "0x962C3B2D6Decc54Bd482517c7284116160B0d84b",
+                from: accounts[0],
+                value: priceInWei
+            });
+    
+            if (!res) {
+                console.error("Ошибка при отправке транзакции");
+                NotificationManager.error("Ошибка при покупке NFT.", "Транзакция не выполнена");
+                return;
+            }
+    
+            // Обновляем данные о владельце и цене игры
+            let updatedGame = { ...game, owner: accounts[0], price: game.price + 0.2 };
+            let updatedGamesList = gamesList.map(g => g.name === game.name ? updatedGame : g);
+            setGamesList(updatedGamesList);
+    
+            // Подключение к Pinata
+            const pinata = new PinataSDK({
+                pinataJwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIxNjdkNDBlMy02NmI4LTQ2MTQtYmIxZi1iNGQzOTVmMTMzZDYiLCJlbWFpbCI6Im5hci5iYXJzZWdoeWFuOTlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6ImI0ZGMyYzBkMGE3MzhhMjVlYmIzIiwic2NvcGVkS2V5U2VjcmV0IjoiMWY2ZmZiNjM3NmNjNGZhNDc5NTA1OTRhOTUzODllMjE3NTU5ZDlmNjBiOTFhZTI4YWMwOGQ0YTBmOGIxYjY3NyIsImV4cCI6MTc2OTg4MTI4N30.7y7hblRzH76ANMPm8iiwTZjhLmi2FjBa_mrX2IUTHw0",
+                pinataGateway: "olive-rapid-owl-18.mypinata.cloud",
+            });
+    
+            // Создаем объект Blob с обновленным списком игр
+            const updatedGamesListJson = JSON.stringify(updatedGamesList);
+            const file = new Blob([updatedGamesListJson], { type: "application/json" });
+            const fileName = "games.json"; // Укажите имя файла для загрузки
+    
+            // Загружаем файл в Pinata
+            try {
+                const upload = await pinata.upload.file(file, fileName);
+                console.log("Файл загружен в Pinata:", upload);
+    localStorage.setItem("cid", upload.cid);
+                NotificationManager.success("Спасибо за покупку!", "Транзакция успешна!");
+
+                // window.location.reload()
+            } catch (pinataError) {
+                console.error("Ошибка при загрузке файла в Pinata:", pinataError);
+                NotificationManager.error("Не удалось загрузить данные в IPFS.", "Ошибка загрузки");
+            }
+    
+            // Обновляем UI
             setTimeout(() => {
-                setGamesList([])
-                initialize();
+                setGamesList([]); // Очистить список
+                initialize(); // Перезагрузить данные
             }, 2500);
+    
+        } catch (error) {
+            console.error("Ошибка в buyNFT:", error);
+            NotificationManager.error("Что-то пошло не так.", "Ошибка транзакции");
         }
-    }
+    };
+    
+
+
+    
+
+    
 
     return (
         <div className="bg-bgcolor min-h-screen">
@@ -105,7 +228,7 @@ const Stake = () => {
                 </>
                 :
                 <div className="flex h-screen">
-                    <div class="m-auto">
+                    <div className="m-auto">
                         <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-amber-300 filter drop-shadow hover:drop-shadow-lg pb-8 animate-pulse">Loading NFT Store...</h1>
                     </div>
                 </div>
